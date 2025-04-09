@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  db:
+    image: mysql:5.7.44
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ./storage/mysql/data:/var/lib/mysql
+
+  hm-products-ms:
+    build:
+      context: ./repositories/hm-products-ms
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./repositories/hm-products-ms:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    depends_on:
+      - db
+
+  webserver:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8989:80"
+      - "443:443"
+    volumes:
+      - ./repositories/hm-products-ms:/var/www
+      - ./nginx/:/etc/nginx/conf.d/
+
+networks:
+  default:
+    driver: bridge
+    name: dev.haxielmalave.internal
+    ipam:
+      config:
+        - subnet: 172.57.0.0/24
+      driver: default

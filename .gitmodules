@@ -1,0 +1,3 @@
+[submodule "repositories/hm-products-ms"]
+	path = repositories/hm-products-ms
+	url = git@github.com:malavehaxiel/hm-products-ms.git
