@@ -1,13 +1,16 @@
 services:
   traefik:
-    image: traefik:v2.3.6
+    image: traefik:v2.10
+    restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
     ports:
-      - 80:80
-      - 8080:8080
+      - "80:80"
+      - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik.yml:/traefik.yml
-      - ./acme.json:/acme.json
+      - "./traefik.yml:/etc/traefik/traefik.yml"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
 
   adminer:
     image: adminer
@@ -40,14 +43,15 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     tty: true
-    ports:
-      - "8989:80"
-      - "443:443"
     volumes:
       - ./repositories/hm-products-ms:/var/www
       - ./nginx/:/etc/nginx/conf.d/
     labels:
-      - "traefik.http.routers.webserver.rule=Host(`ms.products.org`)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.webserver.rule=Host(`dev.haxielmalave.org`)"
+      - "traefik.http.routers.webserver.entrypoints=websecure"
+      - "traefik.http.routers.webserver.tls.certresolver=selfresolver"
+      - "traefik.http.services.webserver.loadbalancer.server.port=80"
 
 networks:
   default:
